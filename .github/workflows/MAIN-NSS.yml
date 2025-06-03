@@ -106,7 +106,7 @@ jobs:
 
       - name: Prepare config file
         run: |
-          cp ./nss-setup/config-nss.seed .config
+          cp ./nss-setup/config.nss .config
           make defconfig
 
       - name: Download package sources
