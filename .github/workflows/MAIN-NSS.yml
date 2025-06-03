@@ -1,0 +1,143 @@
+name: Build AW1000 MAIN NSS
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main-nss'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: main-nss
+          fetch-depth: 0       
+
+      - name: Show the content of feeds.conf.default
+        run: |  
+          echo "Show the content of feeds.conf.default"
+          cat ./feeds.conf.default
+          
+      - name: Show available disk space before cleanup
+        run: |
+          echo "Available disk space before cleanup:"
+          df -h
+
+      - name: Free up disk space
+        run: |
+          echo "Removing unnecessary apt packages and cache..."
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "Removing Android SDK..."
+          sudo rm -rf /usr/local/lib/android
+
+          echo "Removing .NET Core..."
+          sudo rm -rf /usr/share/dotnet
+
+          echo "Removing PowerShell..."
+          sudo rm -rf /opt/microsoft/powershell
+
+          echo "Removing CodeQL Analysis..."
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+          echo "Removing Docker images..."
+          docker image prune -a -f
+
+          echo "Removing unused snap packages..."
+          sudo rm -rf /var/lib/snapd/cache/*
+
+          echo "Removing unused Homebrew packages..."
+          sudo rm -rf /home/linuxbrew/.linuxbrew/
+
+          echo "Removing unused build tools..."
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/share/kotlin
+          sudo rm -rf /usr/share/rust
+
+          echo "Removing TeamCity and Azul Systems content..."
+          sudo rm -rf /opt/az
+          sudo rm -rf /opt/hostedtoolcache/Java_Adopt_jdk
+          sudo rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+
+          echo "Removing large cached content..."
+          sudo rm -rf /var/cache/apt
+          sudo rm -rf /var/lib/gems
+          sudo rm -rf /var/lib/docker/tmp/*
+          sudo rm -rf /usr/local/lib/python*/dist-packages
+          sudo rm -rf /usr/local/lib/python*/site-packages
+          sudo rm -rf /opt/hostedtoolcache/*/*
+
+      - name: Show available disk space after cleanup
+        run: |
+          echo "Available disk space after cleanup:"
+          df -h
+
+      - name: Show kernel, gcc version, CPU core count, total memory
+        run: |
+          echo "Show kernel version:"
+          uname -a
+          echo "Show gcc version:"
+          gcc --version
+          echo "Show CPU core count:"
+          nproc
+          echo "Show CPU model"
+          cat /proc/cpuinfo | grep "model name" | head -1
+          echo "Show Total memory:"
+          free -h
+           
+      - name: Set up build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+            python3-setuptools rsync swig unzip zlib1g-dev file wget
+
+      - name: Update and Install Feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Prepare config file
+        run: |
+          cp ./nss-setup/config-nss.seed .config
+          make defconfig
+
+      - name: Download package sources
+        run: |
+          make download
+
+      - name: Build tools
+        run: |
+          make tools/install -j$(nproc) || make tools/install
+            
+      - name: Build toolchain
+        run: |
+          make toolchain/install -j$(nproc) || make toolchain/install
+
+      - name: Build OpenWrt NSS Image
+        run: |
+          make -j$(nproc)
+
+      - name: Get SHORT SHA 
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+
+      - name: Get the current date
+        run: echo "NOW=$(date +%F-%H%M)" >> $GITHUB_ENV
+
+      - name: Create a release
+        uses: ncipollo/release-action@v1
+        with:
+          name: "AW1000 ROOTER 6.12 ${{ env.NOW }}"
+          tag: "AW1000-ROOTER-6-12-${{ env.SHORT_SHA }}-${{ env.NOW }}"
+          generateReleaseNotes: true
+          makeLatest: false
+          artifacts: |
+            bin/targets/qualcommax/ipq807x/*
+          token: "${{ secrets.GITHUB_TOKEN }}"
