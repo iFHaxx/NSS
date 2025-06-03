@@ -5,6 +5,8 @@ src-git telephony https://git.openwrt.org/feed/telephony.git
 src-git nss_packages https://github.com/qosmio/nss-packages.git;NSS-12.5-K6.x
 src-git sqm_scripts_nss https://github.com/qosmio/sqm-scripts-nss.git
 src-git video https://github.com/openwrt/video.git
-#src-git targets https://github.com/openwrt/targets.git
-#src-git oldpackages http://git.openwrt.org/packages.git
-#src-link custom /usr/src/openwrt/custom-feed
+src-git custom_app https://github.com/intannajwa/custom-app.git
+src-git wwan https://github.com/immortalwrt/wwan-packages.git
+src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git
+src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git
+src-git addonapp https://github.com/iFHaxx/ipq-app.git
