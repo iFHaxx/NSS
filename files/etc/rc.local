@@ -1,3 +1,0 @@
-echo "AT+CFUN=1" > /dev/ttyUSB3
-
-exit 0
