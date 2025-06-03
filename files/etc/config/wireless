@@ -1,0 +1,31 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option path 'platform/soc@0/c000000.wifi'
+	option band '5g'
+	option channel '36'
+	option htmode 'HE80'
+
+config wifi-iface 'default_radio0'
+	option device 'radio0'
+	option network 'lan'
+	option mode 'ap'
+	option ssid 'DOTYWRT 5G'
+	option encryption 'psk2'
+	option key 'dotycat.com'
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option path 'platform/soc@0/c000000.wifi+1'
+	option band '2g'
+	option channel '1'
+	option htmode 'HE20'
+
+config wifi-iface 'default_radio1'
+	option device 'radio1'
+	option network 'lan'
+	option mode 'ap'
+	option ssid 'DOTYWRT 2G'
+	option encryption 'psk2'
+	option key 'dotycat.com'
+
